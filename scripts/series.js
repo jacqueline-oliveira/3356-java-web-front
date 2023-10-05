@@ -8,7 +8,7 @@ const fichaDescricao = document.getElementById('ficha-descricao');
 
 // Função para carregar temporadas
 function carregarTemporadas() {
-    getDados(`/series/${serieId}/temporadas`)
+    getDados(`/series/${serieId}/temporadas/todas`)
         .then(data => {
             const temporadasUnicas = [...new Set(data.map(temporada => temporada.temporada))];
             listaTemporadas.innerHTML = ''; // Limpa as opções existentes
@@ -24,6 +24,11 @@ function carregarTemporadas() {
                 option.textContent = temporada;
                 listaTemporadas.appendChild(option);
             });
+
+            const optionTodos = document.createElement('option');
+            optionTodos.value = 'todas';
+            optionTodos.textContent = 'Todas as temporadas'
+            listaTemporadas.appendChild(optionTodos); 
         })
         .catch(error => {
             console.error('Erro ao obter temporadas:', error);
@@ -34,17 +39,28 @@ function carregarTemporadas() {
 function carregarEpisodios() {
     getDados(`/series/${serieId}/temporadas/${listaTemporadas.value}`)
         .then(data => {
-            fichaSerie.innerHTML = '';
-            const ul = document.createElement('ul');
-            ul.className = 'episodios-lista';
-            const listaHTML = data.map(serie => `
-                <li>
-                    ${serie.numeroEpisodio} - ${serie.titulo}
-                </li>
-            `).join('');
+            const temporadasUnicas = [...new Set(data.map(temporada => temporada.temporada))];
+            fichaSerie.innerHTML = ''; 
+            temporadasUnicas.forEach(temporada => {
+                const ul = document.createElement('ul');
+                ul.className = 'episodios-lista';
 
-            ul.innerHTML = listaHTML;
-            fichaSerie.appendChild(ul);
+                const episodiosTemporadaAtual = data.filter(serie => serie.temporada === temporada);
+
+                const listaHTML = episodiosTemporadaAtual.map(serie => `
+                    <li>
+                        ${serie.numeroEpisodio} - ${serie.titulo}
+                    </li>
+                `).join('');
+                ul.innerHTML = listaHTML;
+                
+                const paragrafo = document.createElement('p');
+                const linha = document.createElement('br');
+                paragrafo.textContent = `Temporada ${temporada}`;
+                fichaSerie.appendChild(paragrafo);
+                fichaSerie.appendChild(linha);
+                fichaSerie.appendChild(ul);
+            });
         })
         .catch(error => {
             console.error('Erro ao obter episódios:', error);
